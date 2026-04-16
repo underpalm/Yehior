@@ -1,0 +1,85 @@
+class BibleBook {
+  final int number; // 1–66 (getbible.net API)
+  final String name;
+  final int chapters;
+
+  const BibleBook({
+    required this.number,
+    required this.name,
+    required this.chapters,
+  });
+}
+
+const List<BibleBook> kOldTestament = [
+  BibleBook(number: 1,  name: '1. Mose',           chapters: 50),
+  BibleBook(number: 2,  name: '2. Mose',           chapters: 40),
+  BibleBook(number: 3,  name: '3. Mose',           chapters: 27),
+  BibleBook(number: 4,  name: '4. Mose',           chapters: 36),
+  BibleBook(number: 5,  name: '5. Mose',           chapters: 34),
+  BibleBook(number: 6,  name: 'Josua',             chapters: 24),
+  BibleBook(number: 7,  name: 'Richter',           chapters: 21),
+  BibleBook(number: 8,  name: 'Ruth',              chapters: 4),
+  BibleBook(number: 9,  name: '1. Samuel',         chapters: 31),
+  BibleBook(number: 10, name: '2. Samuel',         chapters: 24),
+  BibleBook(number: 11, name: '1. Könige',         chapters: 22),
+  BibleBook(number: 12, name: '2. Könige',         chapters: 25),
+  BibleBook(number: 13, name: '1. Chronik',        chapters: 29),
+  BibleBook(number: 14, name: '2. Chronik',        chapters: 36),
+  BibleBook(number: 15, name: 'Esra',              chapters: 10),
+  BibleBook(number: 16, name: 'Nehemia',           chapters: 13),
+  BibleBook(number: 17, name: 'Ester',             chapters: 10),
+  BibleBook(number: 18, name: 'Hiob',              chapters: 42),
+  BibleBook(number: 19, name: 'Psalmen',           chapters: 150),
+  BibleBook(number: 20, name: 'Sprüche',           chapters: 31),
+  BibleBook(number: 21, name: 'Prediger',          chapters: 12),
+  BibleBook(number: 22, name: 'Hoheslied',         chapters: 8),
+  BibleBook(number: 23, name: 'Jesaja',            chapters: 66),
+  BibleBook(number: 24, name: 'Jeremia',           chapters: 52),
+  BibleBook(number: 25, name: 'Klagelieder',       chapters: 5),
+  BibleBook(number: 26, name: 'Hesekiel',          chapters: 48),
+  BibleBook(number: 27, name: 'Daniel',            chapters: 12),
+  BibleBook(number: 28, name: 'Hosea',             chapters: 14),
+  BibleBook(number: 29, name: 'Joel',              chapters: 3),
+  BibleBook(number: 30, name: 'Amos',              chapters: 9),
+  BibleBook(number: 31, name: 'Obadja',            chapters: 1),
+  BibleBook(number: 32, name: 'Jona',              chapters: 4),
+  BibleBook(number: 33, name: 'Micha',             chapters: 7),
+  BibleBook(number: 34, name: 'Nahum',             chapters: 3),
+  BibleBook(number: 35, name: 'Habakuk',           chapters: 3),
+  BibleBook(number: 36, name: 'Zephanja',          chapters: 3),
+  BibleBook(number: 37, name: 'Haggai',            chapters: 2),
+  BibleBook(number: 38, name: 'Sacharja',          chapters: 14),
+  BibleBook(number: 39, name: 'Maleachi',          chapters: 4),
+];
+
+const List<BibleBook> kNewTestament = [
+  BibleBook(number: 40, name: 'Matthäus',          chapters: 28),
+  BibleBook(number: 41, name: 'Markus',            chapters: 16),
+  BibleBook(number: 42, name: 'Lukas',             chapters: 24),
+  BibleBook(number: 43, name: 'Johannes',          chapters: 21),
+  BibleBook(number: 44, name: 'Apostelgeschichte', chapters: 28),
+  BibleBook(number: 45, name: 'Römer',             chapters: 16),
+  BibleBook(number: 46, name: '1. Korinther',      chapters: 16),
+  BibleBook(number: 47, name: '2. Korinther',      chapters: 13),
+  BibleBook(number: 48, name: 'Galater',           chapters: 6),
+  BibleBook(number: 49, name: 'Epheser',           chapters: 6),
+  BibleBook(number: 50, name: 'Philipper',         chapters: 4),
+  BibleBook(number: 51, name: 'Kolosser',          chapters: 4),
+  BibleBook(number: 52, name: '1. Thessalonicher', chapters: 5),
+  BibleBook(number: 53, name: '2. Thessalonicher', chapters: 3),
+  BibleBook(number: 54, name: '1. Timotheus',      chapters: 6),
+  BibleBook(number: 55, name: '2. Timotheus',      chapters: 4),
+  BibleBook(number: 56, name: 'Titus',             chapters: 3),
+  BibleBook(number: 57, name: 'Philemon',          chapters: 1),
+  BibleBook(number: 58, name: 'Hebräer',           chapters: 13),
+  BibleBook(number: 59, name: 'Jakobus',           chapters: 5),
+  BibleBook(number: 60, name: '1. Petrus',         chapters: 5),
+  BibleBook(number: 61, name: '2. Petrus',         chapters: 3),
+  BibleBook(number: 62, name: '1. Johannes',       chapters: 5),
+  BibleBook(number: 63, name: '2. Johannes',       chapters: 1),
+  BibleBook(number: 64, name: '3. Johannes',       chapters: 1),
+  BibleBook(number: 65, name: 'Judas',             chapters: 1),
+  BibleBook(number: 66, name: 'Offenbarung',       chapters: 22),
+];
+
+const List<BibleBook> kAllBooks = [...kOldTestament, ...kNewTestament];
