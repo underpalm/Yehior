@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../models/chat_attachment.dart';
 
 class OpenAIService {
   static const _baseUrl = 'https://api.openai.com/v1/chat/completions';
+  static const _whisperUrl = 'https://api.openai.com/v1/audio/transcriptions';
   static const _model = 'gpt-4.1';
 
   final String apiKey;
@@ -60,5 +62,59 @@ class OpenAIService {
         }
       }
     }
+  }
+
+  /// Transcribes audio using OpenAI Whisper API.
+  Future<String> transcribeAudio(String filePath) async {
+    final request = http.MultipartRequest('POST', Uri.parse(_whisperUrl))
+      ..headers['Authorization'] = 'Bearer $apiKey'
+      ..fields['model'] = 'whisper-1'
+      ..fields['language'] = 'de'
+      ..files.add(await http.MultipartFile.fromPath('file', filePath));
+
+    final response = await request.send();
+    final body = await response.stream.bytesToString();
+
+    if (response.statusCode != 200) {
+      throw Exception('Whisper error ${response.statusCode}: $body');
+    }
+
+    final json = jsonDecode(body) as Map<String, dynamic>;
+    return (json['text'] as String).trim();
+  }
+
+  /// Builds the content array for a user message with an optional attachment.
+  static List<Map<String, dynamic>> buildUserContent(
+    String text, [
+    ChatAttachment? attachment,
+  ]) {
+    if (attachment == null) {
+      return [
+        {'type': 'text', 'text': text},
+      ];
+    }
+
+    if (attachment.isImage) {
+      final mime = attachment.mimeType ?? 'image/jpeg';
+      return [
+        {'type': 'text', 'text': text},
+        {
+          'type': 'image_url',
+          'image_url': {
+            'url': 'data:$mime;base64,${attachment.processedContent}',
+          },
+        },
+      ];
+    }
+
+    // Document: prepend extracted text
+    final docContext =
+        '--- Inhalt der Datei „${attachment.fileName}" ---\n'
+        '${attachment.processedContent}\n'
+        '--- Ende der Datei ---\n\n'
+        '$text';
+    return [
+      {'type': 'text', 'text': docContext},
+    ];
   }
 }

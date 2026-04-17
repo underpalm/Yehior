@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../constants/features.dart';
@@ -28,10 +29,11 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _send() {
+    final provider = context.read<ChatProvider>();
     final text = _messageController.text.trim();
-    if (text.isEmpty) return;
+    if (text.isEmpty && provider.pendingAttachment == null) return;
     _messageController.clear();
-    context.read<ChatProvider>().sendMessage(text);
+    provider.sendMessage(text);
     _scrollToBottom();
   }
 
@@ -47,12 +49,33 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  void _scrollToIndex(int index) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_scrollController.hasClients) return;
+      // Estimate position: each message is roughly 100px tall
+      final target = index * 100.0;
+      final max = _scrollController.position.maxScrollExtent;
+      _scrollController.animateTo(
+        target.clamp(0, max),
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeOut,
+      );
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<ChatProvider>();
 
     // Auto-scroll when streaming
     if (provider.isStreaming) _scrollToBottom();
+
+    // Scroll to saved message position
+    if (provider.pendingScrollIndex != null) {
+      final idx = provider.pendingScrollIndex!;
+      provider.clearPendingScroll();
+      _scrollToIndex(idx);
+    }
 
     return Scaffold(
       drawer: const AppDrawer(),
@@ -132,7 +155,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ...kFeatures.map(
             (f) => PillButton(
               text: '${f['icon']}  ${f['label']!}',
-              onTap: () => provider.sendMessage(f['label']!),
+              onTap: () => provider.startFeatureChat(f['label']!),
             ),
           ),
         ],
@@ -150,9 +173,11 @@ class _HomeScreenState extends State<HomeScreen> {
       itemCount: messages.length + (showStreaming ? 1 : 0),
       itemBuilder: (context, i) {
         if (i < messages.length) {
+          final msg = messages[i];
           return ChatBubble(
-            text: messages[i]['text'] as String,
-            isUser: messages[i]['isUser'] as bool,
+            text: msg['text'] as String,
+            isUser: msg['isUser'] as bool,
+            imageBytes: msg['imageBytes'] as Uint8List?,
           );
         }
         // Streaming bubble

@@ -4,6 +4,8 @@ import '../constants/features.dart';
 import '../constants/theme.dart';
 import '../models/conversation.dart';
 import '../providers/chat_provider.dart';
+import '../screens/saved_screen.dart';
+import '../screens/search_screen.dart';
 import 'drawer_icon_button.dart';
 
 class AppDrawer extends StatelessWidget {
@@ -22,9 +24,29 @@ class AppDrawer extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                DrawerIconButton(icon: Icons.search, label: 'Suche', onTap: () {}),
+                DrawerIconButton(
+                  icon: Icons.search,
+                  label: 'Suche',
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const SearchScreen()),
+                    );
+                  },
+                ),
                 DrawerIconButton(icon: Icons.auto_awesome_outlined, label: 'Pläne', onTap: () {}),
-                DrawerIconButton(icon: Icons.bookmark_border, label: 'Gespeichert', onTap: () {}),
+                DrawerIconButton(
+                  icon: Icons.bookmark_border,
+                  label: 'Gespeichert',
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const SavedScreen()),
+                    );
+                  },
+                ),
               ],
             ),
           ),
@@ -47,9 +69,8 @@ class AppDrawer extends StatelessWidget {
                   style: const TextStyle(fontSize: 14, color: kTextSecondary),
                 ),
                 onTap: () {
-                  provider.startNewChat();
                   Navigator.pop(context);
-                  provider.sendMessage(f['label']!);
+                  provider.startFeatureChat(f['label']!);
                 },
               )),
 

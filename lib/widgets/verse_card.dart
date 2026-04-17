@@ -101,7 +101,9 @@ class VerseCard extends StatelessWidget {
               subtitle: const Text('Stelle Fragen zu diesem Vers'),
               onTap: () {
                 Navigator.pop(context);
-                context.read<ChatProvider>().sendMessage(
+                final provider = context.read<ChatProvider>();
+                provider.startFeatureChat('Bibelgespräch');
+                provider.sendMessage(
                       'Erkläre mir diesen Bibelvers: $_verseRef — $_verseText',
                     );
               },
