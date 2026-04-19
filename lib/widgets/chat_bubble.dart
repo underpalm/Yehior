@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:gpt_markdown/gpt_markdown.dart';
 import 'package:provider/provider.dart';
 import '../constants/theme.dart';
+import '../models/custom_plan.dart';
 import '../providers/chat_provider.dart';
 
 class ChatBubble extends StatelessWidget {
@@ -64,14 +65,25 @@ class ChatBubble extends StatelessWidget {
   }
 
   Widget _buildBotContent(BuildContext context) {
-    final segments = _parseSegments(text);
     final provider = context.watch<ChatProvider>();
     final isSaved = provider.isMessageSaved(text);
+
+    // Check for plan block
+    final parsedPlan = provider.parsePlanFromMessage(text);
+    final planAlreadySaved = parsedPlan != null &&
+        provider.customPlans.any((p) => p.title == parsedPlan.title);
+
+    // Strip the ```yehior-plan block from display text
+    final displayText = text.replaceAll(
+      RegExp(r'```yehior-plan\s*\n[\s\S]*?\n```'),
+      '',
+    );
+    final displaySegments = _parseSegments(displayText);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        ...segments.map((seg) {
+        ...displaySegments.map((seg) {
           if (seg.isQuote) {
             return Padding(
               padding: const EdgeInsets.symmetric(vertical: 8),
@@ -87,6 +99,15 @@ class ChatBubble extends StatelessWidget {
             ),
           );
         }),
+        if (parsedPlan != null && !isStreaming)
+          _PlanPreviewCard(
+            plan: parsedPlan,
+            alreadySaved: planAlreadySaved,
+            onSave: () {
+              provider.addCustomPlan(parsedPlan);
+              provider.startPlan(parsedPlan.id, parsedPlan.totalDays);
+            },
+          ),
         if (!isStreaming)
           Padding(
             padding: const EdgeInsets.only(top: 4),
@@ -172,6 +193,82 @@ class _VerseQuoteCard extends StatelessWidget {
           color: Colors.black87,
           height: 1.6,
         ),
+      ),
+    );
+  }
+}
+
+class _PlanPreviewCard extends StatelessWidget {
+  final CustomPlan plan;
+  final bool alreadySaved;
+  final VoidCallback onSave;
+
+  const _PlanPreviewCard({
+    required this.plan,
+    required this.alreadySaved,
+    required this.onSave,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF3E8FF),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFCE93D8), width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(plan.icon, style: const TextStyle(fontSize: 24)),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  plan.title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            '${plan.totalDays} Tage',
+            style: const TextStyle(fontSize: 13, color: kTextSecondary),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            plan.description,
+            style: const TextStyle(fontSize: 13, color: Colors.black54),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: alreadySaved ? null : onSave,
+              icon: Icon(alreadySaved ? Icons.check : Icons.add,
+                  size: 18),
+              label: Text(
+                  alreadySaved ? 'Plan gespeichert' : 'Plan speichern & starten'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor:
+                    alreadySaved ? Colors.grey.shade300 : const Color(0xFF7E57C2),
+                foregroundColor: alreadySaved ? kTextSecondary : Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

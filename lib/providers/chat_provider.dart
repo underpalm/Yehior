@@ -1,8 +1,11 @@
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import '../constants/features.dart';
 import '../models/bible_highlight.dart';
 import '../models/chat_attachment.dart';
 import '../models/conversation.dart';
+import '../models/custom_plan.dart';
+import '../models/reading_plan.dart';
 import '../models/saved_message.dart';
 import '../services/openai_service.dart';
 import '../services/storage_service.dart';
@@ -29,6 +32,8 @@ class ChatProvider extends ChangeNotifier {
   ChatAttachment? _pendingAttachment;
   bool _isRecording = false;
   bool _isTranscribing = false;
+  List<PlanProgress> _planProgress = [];
+  List<CustomPlan> _customPlans = [];
 
   // --- Getters ---
 
@@ -42,6 +47,12 @@ class ChatProvider extends ChangeNotifier {
   ChatAttachment? get pendingAttachment => _pendingAttachment;
   bool get isRecording => _isRecording;
   bool get isTranscribing => _isTranscribing;
+  List<PlanProgress> get planProgress => _planProgress;
+  List<CustomPlan> get customPlans => _customPlans;
+
+  List<ReadingPlan> get allPlans => [
+        ...customPlans.map((c) => c.toReadingPlan()),
+      ];
 
   void clearPendingScroll() {
     _pendingScrollIndex = null;
@@ -57,6 +68,8 @@ class ChatProvider extends ChangeNotifier {
     _conversations = await _storage.loadConversations();
     _savedMessages = await _storage.loadSavedMessages();
     _highlights = await _storage.loadHighlights();
+    _planProgress = await _storage.loadPlanProgress();
+    _customPlans = await _storage.loadCustomPlans();
     notifyListeners();
   }
 
@@ -371,6 +384,104 @@ class ChatProvider extends ChangeNotifier {
     _savedMessages.insert(0, msg);
     notifyListeners();
     _storage.saveSavedMessages(_savedMessages);
+  }
+
+  // --- Reading plans ---
+
+  PlanProgress? getPlanProgress(String planId) {
+    return _planProgress.where((p) => p.planId == planId).firstOrNull;
+  }
+
+  void startPlan(String planId, int totalDays) {
+    // Remove any existing progress for this plan
+    _planProgress.removeWhere((p) => p.planId == planId);
+    final progress = PlanProgress(
+      planId: planId,
+      startDate: DateTime.now(),
+    );
+    progress.setTotalDays(totalDays);
+    _planProgress.add(progress);
+    notifyListeners();
+    _storage.savePlanProgress(_planProgress);
+  }
+
+  void togglePlanDay(String planId, int day, int totalDays) {
+    final progress = getPlanProgress(planId);
+    if (progress == null) return;
+    progress.setTotalDays(totalDays);
+    if (progress.completedDays.contains(day)) {
+      progress.completedDays.remove(day);
+    } else {
+      progress.completedDays.add(day);
+    }
+    notifyListeners();
+    _storage.savePlanProgress(_planProgress);
+  }
+
+  void removePlan(String planId) {
+    _planProgress.removeWhere((p) => p.planId == planId);
+    notifyListeners();
+    _storage.savePlanProgress(_planProgress);
+  }
+
+  // --- Custom plans ---
+
+  void startPlanCreatorChat() {
+    final greeting = kPlanCreatorGreeting['Planersteller']!;
+
+    final newConv = Conversation(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      title: 'Planersteller',
+      feature: 'Planersteller',
+      messages: [_botMsg(greeting)],
+      updatedAt: DateTime.now(),
+    );
+
+    _conversations.insert(0, newConv);
+    _activeId = newConv.id;
+    notifyListeners();
+    _storage.saveConversations(_conversations);
+  }
+
+  CustomPlan? parsePlanFromMessage(String messageText) {
+    final regex = RegExp(r'```yehior-plan\s*\n([\s\S]*?)\n```');
+    final match = regex.firstMatch(messageText);
+    if (match == null) return null;
+
+    try {
+      final json = jsonDecode(match.group(1)!) as Map<String, dynamic>;
+      final days = (json['days'] as List).map((day) {
+        return (day as List)
+            .map((r) => PlanReading.fromJson(r as Map<String, dynamic>))
+            .toList();
+      }).toList();
+
+      return CustomPlan(
+        id: 'custom_${DateTime.now().millisecondsSinceEpoch}',
+        title: json['title'] as String,
+        description: json['description'] as String,
+        icon: json['icon'] as String? ?? '📋',
+        totalDays: days.length,
+        dailyReadings: days,
+        createdAt: DateTime.now(),
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  void addCustomPlan(CustomPlan plan) {
+    _customPlans.insert(0, plan);
+    notifyListeners();
+    _storage.saveCustomPlans(_customPlans);
+  }
+
+  void deleteCustomPlan(String planId) {
+    _customPlans.removeWhere((p) => p.id == planId);
+    _planProgress.removeWhere((p) => p.planId == planId);
+    notifyListeners();
+    _storage.saveCustomPlans(_customPlans);
+    _storage.savePlanProgress(_planProgress);
   }
 
   // --- Helpers ---

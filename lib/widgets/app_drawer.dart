@@ -4,6 +4,7 @@ import '../constants/features.dart';
 import '../constants/theme.dart';
 import '../models/conversation.dart';
 import '../providers/chat_provider.dart';
+import '../screens/plans_screen.dart';
 import '../screens/saved_screen.dart';
 import '../screens/search_screen.dart';
 import 'drawer_icon_button.dart';
@@ -35,7 +36,17 @@ class AppDrawer extends StatelessWidget {
                     );
                   },
                 ),
-                DrawerIconButton(icon: Icons.auto_awesome_outlined, label: 'Pläne', onTap: () {}),
+                DrawerIconButton(
+                  icon: Icons.auto_awesome_outlined,
+                  label: 'Pläne',
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const PlansScreen()),
+                    );
+                  },
+                ),
                 DrawerIconButton(
                   icon: Icons.bookmark_border,
                   label: 'Gespeichert',
